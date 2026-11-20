@@ -42,10 +42,16 @@ This command creates a Docker image containing the Python environment and all de
 
 ### Run the Docker Container
 
-On Windows PowerShell, run:
+On Windows PowerShell, run (CPU):
 
 ```powershell
 docker run --name soft-silhouette-container -p 8888:8888 -v "${PWD}:/app" soft-silhouette
+```
+
+Or, with an NVIDIA GPU:
+
+```powershell
+docker run --gpus all --name soft-silhouette-container -p 8888:8888 -v "${PWD}:/app" soft-silhouette
 ```
 
 The repository directory is mounted to `/app` inside the Docker container. Therefore, changes made to the project files on the host system are immediately available inside the container.
