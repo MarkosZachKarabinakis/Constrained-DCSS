@@ -198,7 +198,7 @@ class GenericAutoencoder(nn.Module):
                 sum_rec_loss += rec_loss.item()
                 sum_clustering_loss += self.sil_lambda * clustering_loss.item()
                 sum_entropy += self.entr_lambda * mean_entropy.item()
-                sum_soft_silhouette += soft_sil.item()
+                sum_soft_silhouette += self.sil_lambda * soft_sil.item() # markos
 
 
                 optimizer.zero_grad()
