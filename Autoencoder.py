@@ -78,7 +78,7 @@ class GenericAutoencoder(nn.Module):
     def get_latent_data(self):
         data_list, latent_data_list, labels_list = list(), list(), list()
 
-        for batch_index, (data, labels) in enumerate(self.dataloader):
+        for batch_index, (data, labels, _) in enumerate(self.dataloader):
             if self.needsReshape:
                 data = torch.reshape(data, (data.shape[0], self.input_dim, self.IMG_SIZE, self.IMG_SIZE))
             data_list.append(data.cpu().detach().numpy())        
@@ -94,7 +94,7 @@ class GenericAutoencoder(nn.Module):
     def get_similarity_data(self):
         data_list, similarity_list, labels_list = list(), list(), list()
 
-        for _, (data, labels) in enumerate(self.dataloader):
+        for _, (data, labels, _) in enumerate(self.dataloader):
             if self.needsReshape:
                 data = torch.reshape(data, (data.shape[0], self.input_dim, self.IMG_SIZE, self.IMG_SIZE))
                 
@@ -141,7 +141,7 @@ class GenericAutoencoder(nn.Module):
 
         for epoch in range(self.n_pret_epochs):
             sum_rec_loss = 0
-            for _, (data, _) in enumerate(self.dataloader):
+            for _, (data, _, _) in enumerate(self.dataloader):
                 data = data.to(self.device)
 
                 if self.needsReshape:
@@ -177,7 +177,7 @@ class GenericAutoencoder(nn.Module):
             self.labels_list = list()
             self.latent_data_list = list()
             
-            for _, (data, labels) in enumerate(self.dataloader):
+            for _, (data, labels, _) in enumerate(self.dataloader):
                 data = data.to(self.device)
     
                 if self.needsReshape:
