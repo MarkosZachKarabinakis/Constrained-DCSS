@@ -226,6 +226,7 @@ class GenericAutoencoder(nn.Module):
 
         optimizer = optim.Adam(self.parameters(), lr=self.lr)
         MSE = nn.MSELoss()
+        constraint_matrix = constraint_matrix.to(self.device)
         
         # Train Autoencoder
         for epoch in range(self.n_epochs):
@@ -256,6 +257,7 @@ class GenericAutoencoder(nn.Module):
                 clustering_loss = 1 - soft_sil
                 mean_entropy, _ = self.objectives.entropy(soft_clustering, base=2)
                 semi_supervised_loss = self.objectives.semi_supervised_loss(distance_matrix, sub_constraint_matrix)
+                print(f'Semi L: {semi_supervised_loss.item():.4f}')
 
                 total_loss = rec_loss + self.sil_lambda * clustering_loss + self.entr_lambda * mean_entropy + semi_lambda * semi_supervised_loss
 
