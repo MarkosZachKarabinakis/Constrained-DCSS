@@ -107,4 +107,7 @@ class General_Functions:
         if latent.dim() == 1:
             latent = latent.unsqueeze(1)
         return torch.cdist(latent, latent, p=2)
+
+    def make_sub_matrix(self, matrix, indexes):
+        return matrix[indexes][:, indexes]
     

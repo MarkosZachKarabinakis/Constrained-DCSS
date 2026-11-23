@@ -246,6 +246,7 @@ class GenericAutoencoder(nn.Module):
                 
                 reconstructions = self.forward(data)
                 code = self.encoder(data)
+                distance_matrix = General_Functions().make_distance_matrix(code)
                 soft_clustering = self.forward_softMax(data).to(self.device)
 
                 soft_sil = self.objectives.soft_silhouette(code, soft_clustering, requires_distance_grad=True)
