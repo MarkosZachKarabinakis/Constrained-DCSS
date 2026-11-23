@@ -102,4 +102,9 @@ class General_Functions:
                     constraint_matrix[i, j] = -1
 
         return constraint_matrix
+
+    def make_distance_matrix(self, latent):
+        if latent.dim() == 1:
+            latent = latent.unsqueeze(1)
+        return torch.cdist(latent, latent, p=2)
     
