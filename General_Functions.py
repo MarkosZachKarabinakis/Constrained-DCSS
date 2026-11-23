@@ -87,8 +87,16 @@ class General_Functions:
         else:
             print(f"Directory '{directory_path}' already exists.")
 
-    def make_constraint_matrix(self, labels):
+    def make_constraint_matrix(self, labels, optimizer_version=False):
         labels = labels.flatten()
+
+        if optimizer_version:
+            labels = torch.as_tensor(labels)
+            same_label = labels[:, None] == labels[None, :]
+            constraint_matrix = torch.where(same_label, 1.0, -1.0)
+            constraint_matrix.fill_diagonal_(0)
+            return constraint_matrix
+
         n = labels.shape[0]
         constraint_matrix = torch.zeros((n, n))
 
