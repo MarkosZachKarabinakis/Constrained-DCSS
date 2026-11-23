@@ -234,6 +234,7 @@ class GenericAutoencoder(nn.Module):
             sum_soft_silhouette = 0
             sum_clustering_loss = 0
             sum_entropy = 0
+            sum_semi_supervised_loss = 0
 
             self.clusters_list = list()
             self.labels_list = list()
@@ -257,7 +258,6 @@ class GenericAutoencoder(nn.Module):
                 clustering_loss = 1 - soft_sil
                 mean_entropy, _ = self.objectives.entropy(soft_clustering, base=2)
                 semi_supervised_loss = self.objectives.semi_supervised_loss(distance_matrix, sub_constraint_matrix)
-                print(f'Semi L: {semi_supervised_loss.item():.4f}')
 
                 total_loss = rec_loss + self.sil_lambda * clustering_loss + self.entr_lambda * mean_entropy + semi_lambda * semi_supervised_loss
 
@@ -265,6 +265,7 @@ class GenericAutoencoder(nn.Module):
                 sum_clustering_loss += self.sil_lambda * clustering_loss.item()
                 sum_entropy += self.entr_lambda * mean_entropy.item()
                 sum_soft_silhouette += self.sil_lambda * soft_sil.item() # markos
+                sum_semi_supervised_loss += semi_lambda * semi_supervised_loss.item()
 
 
                 optimizer.zero_grad()
@@ -284,6 +285,7 @@ class GenericAutoencoder(nn.Module):
             acc, pur, nmi, ari = self.evaluator.evaluate_model(self.latent_data_list, self.labels_list, self.clusters_list)
             self.df_eval.loc[epoch] = [sum_rec_loss, sum_clustering_loss, sum_soft_silhouette, acc, pur, nmi, ari]
             print(f'Ep: {epoch} Rec L: {sum_rec_loss:.4f} Cl L: {sum_clustering_loss:.4f} Entropy: {sum_entropy:.4f} SSil: {sum_soft_silhouette:.4f} ACC: {acc:.2f} PUR: {pur:.2f} NMI: {nmi:.2f} ARI: {ari:.2f}')
+            print(f'Semi L: {sum_semi_supervised_loss:.4f}')
 
         return self.latent_data_list, self.labels_list, self.clusters_list
 
