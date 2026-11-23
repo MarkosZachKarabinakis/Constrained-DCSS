@@ -221,7 +221,7 @@ class GenericAutoencoder(nn.Module):
 
         return self.latent_data_list, self.labels_list, self.clusters_list
 
-    def train_semi_supervised_autoencoder(self, constraint_matrix):
+    def train_semi_supervised_autoencoder(self, constraint_matrix, semi_lambda):
         self.df_eval = pd.DataFrame(columns=['Rec_Loss','Cl_Loss','Soft_Sil','Accuracy','Purity','Nmi','Ari'])
 
         optimizer = optim.Adam(self.parameters(), lr=self.lr)
@@ -255,8 +255,9 @@ class GenericAutoencoder(nn.Module):
 
                 clustering_loss = 1 - soft_sil
                 mean_entropy, _ = self.objectives.entropy(soft_clustering, base=2)
+                semi_supervised_loss = self.objectives.semi_supervised_loss(distance_matrix, sub_constraint_matrix)
 
-                total_loss = rec_loss + self.sil_lambda * clustering_loss + self.entr_lambda * mean_entropy
+                total_loss = rec_loss + self.sil_lambda * clustering_loss + self.entr_lambda * mean_entropy + semi_lambda * semi_supervised_loss
 
                 sum_rec_loss += rec_loss.item()
                 sum_clustering_loss += self.sil_lambda * clustering_loss.item()
