@@ -238,7 +238,7 @@ class GenericAutoencoder(nn.Module):
             self.labels_list = list()
             self.latent_data_list = list()
             
-            for _, (data, labels, _) in enumerate(self.dataloader):
+            for _, (data, labels, indexes) in enumerate(self.dataloader):
                 data = data.to(self.device)
     
                 if self.needsReshape:
