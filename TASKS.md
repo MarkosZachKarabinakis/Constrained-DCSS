@@ -25,6 +25,15 @@
   - its value in the per-epoch row (`:219`)
   - the print (`:220`)
 - [ ] **Results path**: add the new λ to `set_path` (`Autoencoder.py:224`). Otherwise runs share a folder and the pretrained weights get overwritten.
+- [ ] **Random seeds** in the top cell of the notebook:
+  - `torch.manual_seed(...)`: layer weights, RBF centres, batch order (`Datasets/Datasets.py:167`)
+  - `np.random.seed(...)`: k-means (`Autoencoder.py:112`), t-SNE (`Visualization.py:42`), plot colours (`Visualization.py:14`)
+  - GPU (conv model): `torch.backends.cudnn.deterministic = True` and `torch.backends.cudnn.benchmark = False`
+  - Repeatable only from a fresh kernel with all cells run in order. Not bit-identical on GPU without `torch.use_deterministic_algorithms(True)` (not tested on this code).
+
+## Investigation
+- [ ] **Overfitting with the current constraint loss** (`Objectives.py:45`, used at `Autoencoder.py:259`):
+  - 1-epoch test run (letters A–J, batch 256, λ = 0.01): the loss was −945.7 on the first batch and −414.4 on the last. Times λ that is about −9 to −4 per batch, against about 0.47 per batch for the reconstruction loss.
 
 ## Notes
 - There are no random seeds anywhere, so runs vary. Run several times when comparing with and without constraints.
