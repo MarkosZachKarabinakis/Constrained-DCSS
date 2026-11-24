@@ -114,7 +114,8 @@ class General_Functions:
     def make_distance_matrix(self, latent):
         if latent.dim() == 1:
             latent = latent.unsqueeze(1)
-        return torch.cdist(latent, latent, p=2)
+        distance_matrix = torch.cdist(latent, latent, p=2)
+        return torch.square(distance_matrix)
 
     def make_sub_matrix(self, matrix, indexes):
         return matrix[indexes][:, indexes]
