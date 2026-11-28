@@ -221,12 +221,11 @@ class GenericAutoencoder(nn.Module):
 
         return self.latent_data_list, self.labels_list, self.clusters_list
 
-    def train_semi_supervised_autoencoder(self, constraint_matrix, semi_lambda):
+    def train_semi_supervised_autoencoder(self, semi_lambda):
         self.df_eval = pd.DataFrame(columns=['Rec_Loss','Cl_Loss','Soft_Sil','Accuracy','Purity','Nmi','Ari'])
 
         optimizer = optim.Adam(self.parameters(), lr=self.lr)
         MSE = nn.MSELoss()
-        constraint_matrix = constraint_matrix.to(self.device)
         
         # Train Autoencoder
         for epoch in range(self.n_epochs):
@@ -249,7 +248,8 @@ class GenericAutoencoder(nn.Module):
                 reconstructions = self.forward(data)
                 code = self.encoder(data)
                 distance_matrix = General_Functions().make_distance_matrix(code)
-                sub_constraint_matrix = General_Functions().make_sub_matrix(constraint_matrix, indexes)
+                device_labels = labels.to(self.device)
+                sub_constraint_matrix = General_Functions().make_constraint_matrix(device_labels, optimizer_version=True)
                 soft_clustering = self.forward_softMax(data).to(self.device)
 
                 soft_sil = self.objectives.soft_silhouette(code, soft_clustering, requires_distance_grad=True)
