@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import torch
 import os
 from openpyxl import load_workbook, Workbook
 
@@ -84,5 +85,38 @@ class General_Functions:
             os.makedirs(directory_path)
             print(f"Directory '{directory_path}' created successfully.")
         else:
-            print(f"Directory '{directory_path}' already exists.")    
+            print(f"Directory '{directory_path}' already exists.")
+
+    def make_constraint_matrix(self, labels, optimizer_version=False):
+        labels = labels.flatten()
+
+        if optimizer_version:
+            labels = torch.as_tensor(labels)
+            same_label = labels[:, None] == labels[None, :]
+            constraint_matrix = torch.where(same_label, 1.0, -1.0)
+            constraint_matrix.fill_diagonal_(0)
+            return constraint_matrix
+
+        n = labels.shape[0]
+        constraint_matrix = torch.zeros((n, n))
+
+        for i in range(n):
+            for j in range(n):
+                if i == j:
+                    continue
+                if labels[i] == labels[j]:
+                    constraint_matrix[i, j] = 1
+                else:
+                    constraint_matrix[i, j] = -1
+
+        return constraint_matrix
+
+    def make_distance_matrix(self, latent):
+        if latent.dim() == 1:
+            latent = latent.unsqueeze(1)
+        distance_matrix = torch.cdist(latent, latent, p=2)
+        return torch.square(distance_matrix)
+
+    def make_sub_matrix(self, matrix, indexes):
+        return matrix[indexes][:, indexes]
     

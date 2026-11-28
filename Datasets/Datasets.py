@@ -162,7 +162,8 @@ def get_dataset(dataset_name, batch_size=64):
     data = torch.Tensor(data_np)
     data_shape = data.shape[1]
     labels = torch.Tensor(labels_np)
-    final_dataset = TensorDataset(data, labels)
+    indices = torch.arange(data.shape[0])
+    final_dataset = TensorDataset(data, labels, indices)
     dataloader = DataLoader(final_dataset, batch_size=batch_size, shuffle=SHUFFLE)
 
     return dataloader, data_shape, data_np, labels_np

@@ -42,4 +42,8 @@ class Objectives:
 
 		return mean_entropy, entropy_matrix
 
+	def semi_supervised_loss(self, distance_matrix, sub_constraint_matrix):
+		n = distance_matrix.shape[0]
+		return torch.sum(torch.mul(distance_matrix, sub_constraint_matrix)) / n
+
 		

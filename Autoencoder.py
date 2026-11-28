@@ -78,7 +78,7 @@ class GenericAutoencoder(nn.Module):
     def get_latent_data(self):
         data_list, latent_data_list, labels_list = list(), list(), list()
 
-        for batch_index, (data, labels) in enumerate(self.dataloader):
+        for batch_index, (data, labels, _) in enumerate(self.dataloader):
             if self.needsReshape:
                 data = torch.reshape(data, (data.shape[0], self.input_dim, self.IMG_SIZE, self.IMG_SIZE))
             data_list.append(data.cpu().detach().numpy())        
@@ -94,7 +94,7 @@ class GenericAutoencoder(nn.Module):
     def get_similarity_data(self):
         data_list, similarity_list, labels_list = list(), list(), list()
 
-        for _, (data, labels) in enumerate(self.dataloader):
+        for _, (data, labels, _) in enumerate(self.dataloader):
             if self.needsReshape:
                 data = torch.reshape(data, (data.shape[0], self.input_dim, self.IMG_SIZE, self.IMG_SIZE))
                 
@@ -141,7 +141,7 @@ class GenericAutoencoder(nn.Module):
 
         for epoch in range(self.n_pret_epochs):
             sum_rec_loss = 0
-            for _, (data, _) in enumerate(self.dataloader):
+            for _, (data, _, _) in enumerate(self.dataloader):
                 data = data.to(self.device)
 
                 if self.needsReshape:
@@ -177,7 +177,7 @@ class GenericAutoencoder(nn.Module):
             self.labels_list = list()
             self.latent_data_list = list()
             
-            for _, (data, labels) in enumerate(self.dataloader):
+            for _, (data, labels, _) in enumerate(self.dataloader):
                 data = data.to(self.device)
     
                 if self.needsReshape:
@@ -218,6 +218,73 @@ class GenericAutoencoder(nn.Module):
             acc, pur, nmi, ari = self.evaluator.evaluate_model(self.latent_data_list, self.labels_list, self.clusters_list)
             self.df_eval.loc[epoch] = [sum_rec_loss, sum_clustering_loss, sum_soft_silhouette, acc, pur, nmi, ari]
             print(f'Ep: {epoch} Rec L: {sum_rec_loss:.4f} Cl L: {sum_clustering_loss:.4f} Entropy: {sum_entropy:.4f} SSil: {sum_soft_silhouette:.4f} ACC: {acc:.2f} PUR: {pur:.2f} NMI: {nmi:.2f} ARI: {ari:.2f}')
+
+        return self.latent_data_list, self.labels_list, self.clusters_list
+
+    def train_semi_supervised_autoencoder(self, semi_lambda):
+        self.df_eval = pd.DataFrame(columns=['Rec_Loss','Cl_Loss','Soft_Sil','Accuracy','Purity','Nmi','Ari'])
+
+        optimizer = optim.Adam(self.parameters(), lr=self.lr)
+        MSE = nn.MSELoss()
+        
+        # Train Autoencoder
+        for epoch in range(self.n_epochs):
+            sum_rec_loss = 0
+            sum_soft_silhouette = 0
+            sum_clustering_loss = 0
+            sum_entropy = 0
+            sum_semi_supervised_loss = 0
+
+            self.clusters_list = list()
+            self.labels_list = list()
+            self.latent_data_list = list()
+            
+            for _, (data, labels, indexes) in enumerate(self.dataloader):
+                data = data.to(self.device)
+    
+                if self.needsReshape:
+                    data = torch.reshape(data, (data.shape[0], self.input_dim, self.IMG_SIZE, self.IMG_SIZE))
+                
+                reconstructions = self.forward(data)
+                code = self.encoder(data)
+                distance_matrix = General_Functions().make_distance_matrix(code)
+                device_labels = labels.to(self.device)
+                sub_constraint_matrix = General_Functions().make_constraint_matrix(device_labels, optimizer_version=True)
+                soft_clustering = self.forward_softMax(data).to(self.device)
+
+                soft_sil = self.objectives.soft_silhouette(code, soft_clustering, requires_distance_grad=True)
+                rec_loss = MSE(reconstructions, data)
+
+                clustering_loss = 1 - soft_sil
+                mean_entropy, _ = self.objectives.entropy(soft_clustering, base=2)
+                semi_supervised_loss = self.objectives.semi_supervised_loss(distance_matrix, sub_constraint_matrix)
+
+                total_loss = rec_loss + self.sil_lambda * clustering_loss + self.entr_lambda * mean_entropy + semi_lambda * semi_supervised_loss
+
+                sum_rec_loss += rec_loss.item()
+                sum_clustering_loss += self.sil_lambda * clustering_loss.item()
+                sum_entropy += self.entr_lambda * mean_entropy.item()
+                sum_soft_silhouette += self.sil_lambda * soft_sil.item() # markos
+                sum_semi_supervised_loss += semi_lambda * semi_supervised_loss.item()
+
+
+                optimizer.zero_grad()
+                total_loss.backward()
+                optimizer.step()
+
+                # Take argmax from soft clustering
+                self.clusters_list.append(soft_clustering)
+                self.labels_list.append(labels)
+                self.latent_data_list.append(code.cpu().detach().numpy())
+                
+            self.clusters_list = torch.cat(self.clusters_list, dim=0)
+            self.clusters_list = self.torch_to_numpy(self.clusters_list)
+            self.labels_list = np.concatenate(self.labels_list).astype(int)
+            self.latent_data_list = np.concatenate(self.latent_data_list)
+
+            acc, pur, nmi, ari = self.evaluator.evaluate_model(self.latent_data_list, self.labels_list, self.clusters_list)
+            self.df_eval.loc[epoch] = [sum_rec_loss, sum_clustering_loss, sum_soft_silhouette, acc, pur, nmi, ari]
+            print(f'Ep: {epoch} Rec L: {sum_rec_loss:.4f} Cl L: {sum_clustering_loss:.4f} Entropy: {sum_entropy:.4f} SSil: {sum_soft_silhouette:.4f} Semi L: {sum_semi_supervised_loss:.4f} ACC: {acc:.2f} PUR: {pur:.2f} NMI: {nmi:.2f} ARI: {ari:.2f}')
 
         return self.latent_data_list, self.labels_list, self.clusters_list
 

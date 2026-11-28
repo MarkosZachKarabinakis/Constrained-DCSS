@@ -79,8 +79,10 @@ Alternatively, the project can be executed without Docker.
 Install the required dependencies by running:
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu128
 ```
+
+`--extra-index-url` is needed because the `+cu128` builds of PyTorch and torchvision are not on PyPI. Using `--index-url` instead would make pip look only at the PyTorch index, and the other packages would fail to install.
 
 Then open:
 
@@ -90,7 +92,7 @@ DCSS_Demo.ipynb
 
 using Jupyter Notebook, JupyterLab, Visual Studio Code, or another compatible environment, and run the notebook cells sequentially.
 
-The original `requirements.txt` includes the CUDA 12.1 versions of PyTorch and torchvision. Therefore, users without a compatible NVIDIA GPU may need to install the corresponding CPU versions of PyTorch instead.
+`requirements.txt` includes the CUDA 12.8 versions of PyTorch and torchvision. Therefore, users without a compatible NVIDIA GPU may need to install the corresponding CPU versions of PyTorch instead.
 
 # References
 ```
